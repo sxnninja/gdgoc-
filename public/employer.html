@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Không gian Doanh nghiệp</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <div class="nav-left">
+                <a class="site-brand" href="/index.html">Projecthub</a>
+                <a href="/projects.html">Khám phá</a>
+                <a href="/employer.html" class="nav-current">Doanh nghiệp</a>
+            </div>
+
+            <div class="nav-right">
+                <a href="/login.html">Login</a>
+                <a class="btn-signup" href="/signup.html">Sign Up</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero hero--employer">
+        <div class="hero-inner">
+            <h1>Không gian dành cho Doanh nghiệp</h1>
+            <p>Đăng dự án thực tế, kết nối với ứng viên tiềm năng và theo dõi những cơ hội bạn đã xuất bản.</p>
+        </div>
+    </section>
+
+    <main class="container employer-page" id="employerApp">
+        <section class="employer-gate" id="employerGate">
+            <div class="employer-card">
+                <h2>Chỉ dành cho tài khoản Employer</h2>
+                <p>Hãy đăng nhập bằng tài khoản Employer để tạo và quản lý dự án.</p>
+                <div class="gate-actions">
+                    <a class="btn-primary" href="/login.html">Đăng nhập</a>
+                    <a class="social-outline" href="/signup.html">Đăng ký tài khoản Employer</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="employer-dashboard hidden" id="employerDashboard">
+            <div class="employer-layout">
+                <div class="employer-column">
+                    <div class="employer-card">
+                        <h2>Tạo dự án mới</h2>
+                        <form id="projectForm" class="employer-form">
+                            <label for="projectTitle">Tên dự án</label>
+                            <input class="input" type="text" id="projectTitle" required placeholder="Ví dụ: Xây dựng landing page sản phẩm" />
+
+                            <label for="projectShort">Mô tả ngắn</label>
+                            <textarea class="input" id="projectShort" rows="3" maxlength="220" required placeholder="Tóm tắt nhanh về dự án"></textarea>
+
+                            <label for="projectDescription">Chi tiết & kỳ vọng</label>
+                            <textarea class="input" id="projectDescription" rows="6" placeholder="Trình bày chi tiết yêu cầu, phạm vi, kết quả mong đợi..."></textarea>
+
+                            <div class="employer-form-grid">
+                                <div>
+                                    <label for="projectBudget">Ngân sách</label>
+                                    <input class="input" type="text" id="projectBudget" required placeholder="Ví dụ: 4.500.000 VND" />
+                                </div>
+                                <div>
+                                    <label for="projectDeadline">Hạn chót</label>
+                                    <input class="input" type="date" id="projectDeadline" required />
+                                </div>
+                            </div>
+
+                            <div class="employer-form-grid">
+                                <div>
+                                    <label for="projectLocation">Địa điểm / Hình thức</label>
+                                    <input class="input" type="text" id="projectLocation" placeholder="Ví dụ: Remote, Hà Nội..." />
+                                </div>
+                                <div>
+                                    <label for="projectDuration">Thời lượng</label>
+                                    <input class="input" type="text" id="projectDuration" placeholder="Ví dụ: 6 tuần" />
+                                </div>
+                            </div>
+
+                            <label for="projectSkills">Kỹ năng cần thiết</label>
+                            <input class="input" type="text" id="projectSkills" placeholder="Nhập các kỹ năng, cách nhau bằng dấu phẩy" />
+
+                            <label for="projectOwner">Tên tổ chức</label>
+                            <input class="input" type="text" id="projectOwner" placeholder="Ví dụ: Công ty ABC" />
+
+                            <div class="employer-toggle">
+                                <input type="checkbox" id="projectFeatured" />
+                                <label for="projectFeatured">Đánh dấu là dự án nổi bật</label>
+                            </div>
+
+                            <p class="form-status" id="formStatus"></p>
+                            <button type="submit" class="btn-primary">Đăng dự án</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="employer-column">
+                    <div class="employer-card">
+                        <h2>Dự án của bạn</h2>
+                        <p class="muted" id="projectHint">Các dự án đã đăng sẽ xuất hiện trên mục Khám phá.</p>
+                        <div id="projectList" class="employer-list"></div>
+                    </div>
+                    <div class="employer-card hidden" id="applicationsCard">
+                        <h2>Ứng viên đã nộp</h2>
+                        <p class="muted" id="applicationsHint">Chọn một dự án để xem hồ sơ ứng viên.</p>
+                        <div id="applicationsList" class="employer-list"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="/firebase.js"></script>
+    <script src="/auth.js"></script>
+    <script src="/header-auth.js"></script>
+    <script>
+        (function(){
+            const gateSection = document.getElementById('employerGate');
+            const dashboardSection = document.getElementById('employerDashboard');
+            const form = document.getElementById('projectForm');
+            const formStatus = document.getElementById('formStatus');
+            const projectList = document.getElementById('projectList');
+            const projectHint = document.getElementById('projectHint');
+            const applicationsCard = document.getElementById('applicationsCard');
+            const applicationsList = document.getElementById('applicationsList');
+            const applicationsHint = document.getElementById('applicationsHint');
+
+            const localStoreKey = 'employer_projects_fallback';
+            let currentUser = null;
+            const state = {
+                projects: [],
+                selectedProjectId: null,
+                applicationsUnsub: null
+            };
+
+            function setLoading(message){
+                projectList.innerHTML = `<div class="employer-empty">${message || 'Đang tải...'}</div>`;
+            }
+
+            function setApplicationsLoading(message){
+                if(!applicationsCard) return;
+                applicationsCard.classList.remove('hidden');
+                applicationsHint.textContent = message || 'Đang tải ứng viên...';
+                applicationsList.innerHTML = `<div class="employer-empty">${message || 'Đang tải ứng viên...'}</div>`;
+            }
+
+            function normalizeNotificationForUserDoc(id, data){
+                const now = new Date();
+                const iso = now.toISOString();
+                const millis = now.getTime();
+                const sourceData = data || {};
+                return {
+                    id: id || sourceData.id || ('local-' + millis),
+                    title: sourceData.title || '',
+                    message: sourceData.message || '',
+                    url: sourceData.url || null,
+                    type: sourceData.type || 'general',
+                    read: false,
+                    createdAtISO: sourceData.createdAtISO || iso,
+                    createdAtMillis: sourceData.createdAtMillis || millis,
+                    meta: sourceData.meta || {}
+                };
+            }
+
+            async function appendNotificationToUserDoc(userId, notification){
+                if(!firebase || !firebase.firestore || !userId) return;
+                try{
+                    const userRef = firebase.firestore().collection('users').doc(userId);
+                    await firebase.firestore().runTransaction(async function(tx){
+                        const snap = await tx.get(userRef);
+                        const existing = snap.exists && Array.isArray(snap.data().notificationsFeed) ? snap.data().notificationsFeed.slice() : [];
+                        const normalized = normalizeNotificationForUserDoc(notification.id, notification);
+                        existing.unshift(normalized);
+                        const trimmed = existing.slice(0, 50);
+                        tx.set(userRef, { notificationsFeed: trimmed }, { merge: true });
+                    });
+                }catch(err){
+                    console.warn('appendNotificationToUserDoc failed', err);
+                }
+            }
+
+            function sendNotification(userId, payload){
+                if(!userId){
+                    return Promise.resolve(null);
+                }
+                if(!firebase || !firebase.firestore){
+                    console.warn('Không thể gửi thông báo khi Firestore không khả dụng.');
+                    return Promise.resolve(null);
+                }
+                const db = firebase.firestore();
+                const docRef = db.collection('notifications').doc();
+                const now = firebase.firestore.FieldValue && firebase.firestore.FieldValue.serverTimestamp ? firebase.firestore.FieldValue.serverTimestamp() : new Date();
+                const clientNow = new Date();
+                const data = Object.assign({
+                    id: docRef.id,
+                    userId,
+                    title: '',
+                    message: '',
+                    url: null,
+                    type: 'general',
+                    read: false,
+                    createdAt: now,
+                    createdAtISO: clientNow.toISOString(),
+                    createdAtMillis: clientNow.getTime(),
+                    meta: {}
+                }, payload || {});
+
+                return docRef.set(data).catch(function(err){
+                    console.warn('sendNotification thất bại', err);
+                }).then(function(){
+                    return appendNotificationToUserDoc(userId, data).then(function(){ return docRef; });
+                }).catch(function(err){
+                    console.warn('appendNotificationToUserDoc sau sendNotification thất bại', err);
+                    return docRef;
+                });
+            }
+
+            function getFallbackProjects(){
+                try{
+                    const raw = localStorage.getItem(localStoreKey);
+                    if(!raw) return [];
+                    const data = JSON.parse(raw);
+                    return Array.isArray(data) ? data : [];
+                }catch(e){ console.warn('Không đọc được dữ liệu fallback', e); return []; }
+            }
+
+            function setFallbackProjects(items){
+                try{ localStorage.setItem(localStoreKey, JSON.stringify(items || [])); }
+                catch(e){ console.warn('Không lưu được fallback projects', e); }
+            }
+
+            function removeProjectFromFallback(id){
+                if(!id) return;
+                const items = getFallbackProjects().filter(item => item.id !== id);
+                setFallbackProjects(items);
+            }
+
+            function toDateString(value){
+                if(!value) return '';
+                try{
+                    if(value.toDate){
+                        const d = value.toDate();
+                        return d.toLocaleDateString('vi-VN');
+                    }
+                    return new Date(value).toLocaleDateString('vi-VN');
+                }catch(e){
+                    return value;
+                }
+            }
+
+            function renderProjects(projects){
+                state.projects = projects.slice();
+                if(!state.projects.length){
+                    projectList.innerHTML = '<div class="employer-empty">Chưa có dự án nào. Hãy tạo dự án đầu tiên!</div>';
+                    if(applicationsCard) applicationsCard.classList.add('hidden');
+                    state.selectedProjectId = null;
+                    return;
+                }
+
+                if(!state.selectedProjectId || !state.projects.some(item => item.id === state.selectedProjectId)){
+                    state.selectedProjectId = state.projects[0].id;
+                }
+
+                projectList.innerHTML = '';
+                state.projects.forEach(project => {
+                    const card = document.createElement('article');
+                    card.className = 'project-card employer-project-card';
+                    if(state.selectedProjectId === project.id){
+                        card.classList.add('employer-project-card--active');
+                    }
+                    const deadline = project.deadline ? toDateString(project.deadline) : '—';
+                    const budget = project.budget || '—';
+                    const skills = (project.skills || []).map(s => `<span class="tag">${s}</span>`).join('');
+                    card.innerHTML = `
+                        <div class="project-card__head">
+                            <h3>${project.title || 'Không có tiêu đề'}</h3>
+                            ${project.featured ? '<span class="badge badge--highlight">Nổi bật</span>' : ''}
+                        </div>
+                        <p class="meta">Ngân sách: ${budget} · Hạn chót: ${deadline}</p>
+                        <p>${project.shortDesc || ''}</p>
+                        ${skills ? `<div class="tags">${skills}</div>` : ''}
+                    `;
+                    const infoBits = [];
+                    if(project.location) infoBits.push(project.location);
+                    if(project.duration) infoBits.push(project.duration);
+                    if(infoBits.length){
+                        const extra = document.createElement('p');
+                        extra.className = 'small-note';
+                        extra.textContent = infoBits.join(' • ');
+                        card.appendChild(extra);
+                    }
+                    const actions = document.createElement('div');
+                    actions.className = 'employer-project-actions';
+                    const viewBtn = document.createElement('button');
+                    viewBtn.type = 'button';
+                    viewBtn.className = 'btn-secondary';
+                    viewBtn.textContent = state.selectedProjectId === project.id ? 'Đang xem ứng viên' : 'Xem ứng viên';
+                    if(state.selectedProjectId === project.id){
+                        viewBtn.disabled = true;
+                    }
+                    viewBtn.addEventListener('click', function(){ selectProject(project.id); });
+                    actions.appendChild(viewBtn);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'btn-ghost danger';
+                    deleteBtn.textContent = 'Xóa dự án';
+                    deleteBtn.addEventListener('click', function(){ handleDeleteProject(project); });
+                    actions.appendChild(deleteBtn);
+
+                    card.appendChild(actions);
+                    projectList.appendChild(card);
+                });
+            }
+
+            function selectProject(projectId){
+                if(state.selectedProjectId === projectId) return;
+                state.selectedProjectId = projectId;
+                renderProjects(state.projects);
+                loadApplications(projectId);
+            }
+
+            function cleanupApplications(){
+                if(state.applicationsUnsub){
+                    try{ state.applicationsUnsub(); }catch(e){ console.warn('Hủy đăng ký ứng viên thất bại', e); }
+                    state.applicationsUnsub = null;
+                }
+            }
+
+            function formatDateTime(value){
+                if(!value) return '—';
+                try{
+                    if(value.toDate) return value.toDate().toLocaleString('vi-VN');
+                    if(value.seconds) return new Date(value.seconds * 1000).toLocaleString('vi-VN');
+                    const parsed = Date.parse(value);
+                    if(!Number.isNaN(parsed)) return new Date(parsed).toLocaleString('vi-VN');
+                }catch(e){
+                    /* ignore */
+                }
+                return value + '';
+            }
+
+            function statusLabel(status){
+                switch(status){
+                    case 'accepted': return 'Đã chấp nhận';
+                    case 'rejected': return 'Đã từ chối';
+                    case 'terminated': return 'Đã sa thải';
+                    case 'pending':
+                    default: return 'Đang chờ duyệt';
+                }
+            }
+
+            function renderApplications(applications){
+                if(!applicationsCard) return;
+                applicationsCard.classList.remove('hidden');
+                if(!applications.length){
+                    applicationsHint.textContent = 'Chưa có ứng viên nào nộp hồ sơ.';
+                    applicationsList.innerHTML = '<div class="employer-empty">Chưa có ứng viên nào nộp hồ sơ.</div>';
+                    return;
+                }
+
+                applicationsHint.textContent = `Có ${applications.length} hồ sơ`;
+                applicationsList.innerHTML = '';
+
+                applications.forEach(app => {
+                    const card = document.createElement('article');
+                    card.className = 'project-card employer-app-card';
+                    const status = app.status || 'pending';
+                    const candidateName = app.candidateName || app.candidateEmail || 'Ứng viên';
+                    const candidateEmail = app.candidateEmail || '';
+                    const profileLink = app.candidateUid ? `profile-view.html?uid=${encodeURIComponent(app.candidateUid)}` : null;
+                    const nameMarkup = profileLink ? `<a class="employer-app-name" href="${profileLink}" target="_blank" rel="noopener">${candidateName}</a>` : candidateName;
+                    const terminatedAt = app.terminatedAt ? formatDateTime(app.terminatedAt) : null;
+                    const terminationReason = status === 'terminated' && app.terminationReason ? app.terminationReason : null;
+                    card.innerHTML = `
+                        <div class="employer-app-header">
+                            <div>
+                                <h4>${nameMarkup}</h4>
+                                ${candidateEmail ? `<p class="small-note">${candidateEmail}</p>` : ''}
+                                ${app.candidateUid ? `<p class="small-note">UID: ${app.candidateUid}</p>` : ''}
+                            </div>
+                            <span class="status-chip status-chip--${status}">${statusLabel(status)}</span>
+                        </div>
+                        <p class="small-note">Nộp ngày: ${formatDateTime(app.submittedAt)}</p>
+                        ${app.note && status === 'rejected' ? `<p class="small-note"><strong>Lý do:</strong> ${app.note}</p>` : ''}
+                        ${status === 'terminated' && terminatedAt ? `<p class="small-note"><strong>Sa thải:</strong> ${terminatedAt}</p>` : ''}
+                        ${terminationReason ? `<p class="small-note"><strong>Lý do sa thải:</strong> ${terminationReason}</p>` : ''}
+                    `;
+
+                    if(status === 'accepted' && app.acceptanceMessage){
+                        const acceptanceNote = document.createElement('p');
+                        acceptanceNote.className = 'small-note';
+                        const label = document.createElement('strong');
+                        label.textContent = 'Thông điệp khi chấp nhận:';
+                        acceptanceNote.appendChild(label);
+                        acceptanceNote.appendChild(document.createTextNode(' ' + app.acceptanceMessage));
+                        card.appendChild(acceptanceNote);
+                    }
+
+                    if(status === 'accepted' && app.lastEmployerMessage && app.lastEmployerMessage.text){
+                        const lastMsg = document.createElement('p');
+                        lastMsg.className = 'small-note';
+                        const label = document.createElement('strong');
+                        label.textContent = 'Thông báo gần nhất gửi ứng viên:';
+                        lastMsg.appendChild(label);
+                        lastMsg.appendChild(document.createTextNode(' ' + app.lastEmployerMessage.text));
+                        if(app.lastEmployerMessage.createdAt){
+                            const timeSpan = document.createElement('span');
+                            timeSpan.textContent = ' (' + formatDateTime(app.lastEmployerMessage.createdAt) + ')';
+                            lastMsg.appendChild(timeSpan);
+                        }
+                        card.appendChild(lastMsg);
+                    }
+
+                    const actions = document.createElement('div');
+                    actions.className = 'employer-app-actions';
+
+                    if(status === 'pending'){
+                        const acceptBtn = document.createElement('button');
+                        acceptBtn.type = 'button';
+                        acceptBtn.className = 'btn-primary btn-primary--small';
+                        acceptBtn.textContent = 'Chấp nhận';
+                        acceptBtn.addEventListener('click', function(){ updateApplicationStatus(app, 'accepted'); });
+
+                        const rejectBtn = document.createElement('button');
+                        rejectBtn.type = 'button';
+                        rejectBtn.className = 'btn-ghost danger btn-ghost--small';
+                        rejectBtn.textContent = 'Từ chối';
+                        rejectBtn.addEventListener('click', function(){ updateApplicationStatus(app, 'rejected'); });
+
+                        actions.appendChild(acceptBtn);
+                        actions.appendChild(rejectBtn);
+                    }else if(status === 'accepted'){
+                        const badgeBtn = document.createElement('button');
+                        badgeBtn.type = 'button';
+                        badgeBtn.className = 'btn-secondary btn-secondary--small';
+                        badgeBtn.textContent = 'Cấp huy hiệu';
+                        badgeBtn.addEventListener('click', function(){ issueBadgeForCandidate(app); });
+
+                        const removeBadgeBtn = document.createElement('button');
+                        removeBadgeBtn.type = 'button';
+                        removeBadgeBtn.className = 'btn-ghost btn-ghost--small';
+                        removeBadgeBtn.textContent = 'Gỡ huy hiệu';
+                        removeBadgeBtn.addEventListener('click', function(){ removeBadgeForCandidate(app); });
+
+                        const messageBtn = document.createElement('button');
+                        messageBtn.type = 'button';
+                        messageBtn.className = 'btn-secondary btn-secondary--small';
+                        messageBtn.textContent = 'Gửi thông báo';
+                        messageBtn.addEventListener('click', function(){ sendApplicationMessage(app); });
+
+                        const terminateBtn = document.createElement('button');
+                        terminateBtn.type = 'button';
+                        terminateBtn.className = 'btn-ghost danger btn-ghost--small';
+                        terminateBtn.textContent = 'Sa thải';
+                        terminateBtn.addEventListener('click', function(){ terminateApplication(app); });
+
+                        actions.appendChild(badgeBtn);
+                        actions.appendChild(removeBadgeBtn);
+                        actions.appendChild(messageBtn);
+                        actions.appendChild(terminateBtn);
+                    }
+
+                    card.appendChild(actions);
+                    applicationsList.appendChild(card);
+                });
+            }
+
+            async function issueBadgeForCandidate(application){
+                if(!application || !application.candidateUid){
+                    alert('Không xác định được ứng viên để cấp huy hiệu.');
+                    return;
+                }
+                if(!firebase || !firebase.firestore){
+                    alert('Không thể kết nối tới Firestore để cấp huy hiệu.');
+                    return;
+                }
+                const project = state.projects.find(item => item.id === application.projectId) || {};
+                const projectTitle = application.projectTitle || project.title || '';
+                const defaultBadgeName = projectTitle ? `Hoàn thành ${projectTitle}` : '';
+                const badgeName = window.prompt('Nhập tên huy hiệu muốn cấp cho ứng viên:', defaultBadgeName);
+                if(!badgeName){
+                    return;
+                }
+                const reasonDefault = projectTitle ? `Hoàn thành dự án ${projectTitle}` : '';
+                const badgeReason = window.prompt('Ghi chú/Lý do cấp huy hiệu (tuỳ chọn):', reasonDefault) || '';
+                const issuerName = project.owner || (currentUser && currentUser.displayName) || (currentUser && currentUser.email) || 'Doanh nghiệp';
+                const badge = {
+                    id: `${application.projectId || 'project'}_${application.candidateUid}_${Date.now()}`,
+                    name: badgeName,
+                    reason: badgeReason,
+                    projectId: application.projectId || null,
+                    projectTitle,
+                    issuedByUid: currentUser ? currentUser.uid : null,
+                    issuedByEmail: currentUser ? currentUser.email || '' : '',
+                    issuedByName: issuerName,
+                    issuedAt: new Date().toISOString()
+                };
+
+                try{
+                    const userRef = firebase.firestore().collection('users').doc(application.candidateUid);
+                    if(firebase.firestore.FieldValue && firebase.firestore.FieldValue.arrayUnion){
+                        await userRef.set({ badges: firebase.firestore.FieldValue.arrayUnion(badge) }, { merge: true });
+                    }else{
+                        const snapshot = await userRef.get();
+                        const existing = snapshot.exists && Array.isArray(snapshot.data().badges) ? snapshot.data().badges.slice() : [];
+                        existing.push(badge);
+                        await userRef.set({ badges: existing }, { merge: true });
+                    }
+                    alert('Đã cấp huy hiệu cho ứng viên.');
+                    try{
+                        await sendNotification(application.candidateUid, {
+                            type: 'badge-issued',
+                            title: 'Bạn nhận được huy hiệu mới',
+                            message: `${issuerName} đã cấp huy hiệu "${badgeName}"${projectTitle ? ` cho dự án ${projectTitle}` : ''}.`,
+                            url: 'profile.html',
+                            meta: {
+                                badgeId: badge.id,
+                                projectId: badge.projectId,
+                                projectTitle: badge.projectTitle || ''
+                            }
+                        });
+                    }catch(notifErr){
+                        console.warn('Gửi thông báo huy hiệu thất bại', notifErr);
+                    }
+                }catch(error){
+                    console.error('issueBadgeForCandidate failed', error);
+                    alert('Không thể cấp huy hiệu. Vui lòng thử lại sau.');
+                }
+            }
+
+            async function removeBadgeForCandidate(application){
+                if(!application || !application.candidateUid){
+                    alert('Không xác định được ứng viên để gỡ huy hiệu.');
+                    return;
+                }
+                if(!firebase || !firebase.firestore){
+                    alert('Không thể kết nối tới Firestore để gỡ huy hiệu.');
+                    return;
+                }
+                try{
+                    const userRef = firebase.firestore().collection('users').doc(application.candidateUid);
+                    const snapshot = await userRef.get();
+                    const data = snapshot.exists ? snapshot.data() || {} : {};
+                    const badges = Array.isArray(data.badges) ? data.badges : [];
+                    if(!badges.length){
+                        alert('Ứng viên chưa có huy hiệu nào để gỡ.');
+                        return;
+                    }
+                    const options = badges.map(function(badge, index){
+                        const item = typeof badge === 'string' ? { name: badge } : (badge || {});
+                        const name = item.name || `Huy hiệu ${index + 1}`;
+                        const project = item.projectTitle ? ` – ${item.projectTitle}` : '';
+                        return `${index + 1}. ${name}${project}`;
+                    }).join('\n');
+                    const input = window.prompt('Chọn huy hiệu muốn gỡ (nhập số thứ tự):\n' + options);
+                    if(!input) return;
+                    const chosen = parseInt(input, 10);
+                    if(Number.isNaN(chosen) || chosen < 1 || chosen > badges.length){
+                        alert('Lựa chọn không hợp lệ.');
+                        return;
+                    }
+                    const badgeToRemove = badges[chosen - 1];
+                    if(firebase.firestore.FieldValue && firebase.firestore.FieldValue.arrayRemove){
+                        await userRef.update({ badges: firebase.firestore.FieldValue.arrayRemove(badgeToRemove) });
+                    }else{
+                        const updated = badges.filter((_, idx) => idx !== (chosen - 1));
+                        await userRef.set({ badges: updated }, { merge: true });
+                    }
+                    alert('Đã gỡ huy hiệu khỏi hồ sơ ứng viên.');
+                    const issuerName = currentUser ? (currentUser.displayName || currentUser.email || 'Doanh nghiệp') : 'Doanh nghiệp';
+                    try{
+                        await sendNotification(application.candidateUid, {
+                            type: 'badge-removed',
+                            title: 'Một huy hiệu đã bị gỡ',
+                            message: `${issuerName} đã gỡ huy hiệu "${(badgeToRemove && badgeToRemove.name) || 'Huy hiệu'}" khỏi hồ sơ của bạn.`,
+                            url: 'profile.html',
+                            meta: {
+                                badgeId: badgeToRemove && badgeToRemove.id ? badgeToRemove.id : null,
+                                projectId: badgeToRemove && badgeToRemove.projectId ? badgeToRemove.projectId : null
+                            }
+                        });
+                    }catch(notifErr){
+                        console.warn('Gửi thông báo gỡ huy hiệu thất bại', notifErr);
+                    }
+                }catch(error){
+                    console.error('removeBadgeForCandidate failed', error);
+                    alert('Không thể gỡ huy hiệu vào lúc này. Vui lòng thử lại sau.');
+                }
+            }
+
+            async function autoRemoveBadgesForProject(application){
+                if(!application || !application.candidateUid || !application.projectId){
+                    return { removed: [] };
+                }
+                if(!firebase || !firebase.firestore){
+                    return { removed: [], error: new Error('Firestore unavailable') };
+                }
+                try{
+                    const userRef = firebase.firestore().collection('users').doc(application.candidateUid);
+                    const snapshot = await userRef.get();
+                    if(!snapshot.exists){
+                        return { removed: [] };
+                    }
+                    const data = snapshot.data() || {};
+                    const badges = Array.isArray(data.badges) ? data.badges.slice() : [];
+                    if(!badges.length){
+                        return { removed: [] };
+                    }
+                    const removed = [];
+                    const remaining = badges.filter(function(badge){
+                        const item = typeof badge === 'string' ? { projectId: null } : (badge || {});
+                        if(item.projectId && item.projectId === application.projectId){
+                            removed.push(badge);
+                            return false;
+                        }
+                        return true;
+                    });
+                    if(!removed.length){
+                        return { removed: [] };
+                    }
+                    await userRef.set({ badges: remaining }, { merge: true });
+                    return { removed };
+                }catch(err){
+                    console.warn('autoRemoveBadgesForProject failed', err);
+                    return { removed: [], error: err };
+                }
+            }
+
+            async function sendApplicationMessage(application){
+                if(!application || !application.candidateUid){
+                    alert('Không xác định được ứng viên để gửi thông báo.');
+                    return;
+                }
+                if(!firebase || !firebase.firestore){
+                    alert('Không thể kết nối Firestore để gửi thông báo.');
+                    return;
+                }
+                const message = window.prompt('Nhập nội dung thông báo muốn gửi tới ứng viên:', '');
+                if(!message) return;
+                const issuerName = currentUser ? (currentUser.displayName || currentUser.email || 'Doanh nghiệp') : 'Doanh nghiệp';
+                const timestamp = firebase.firestore.FieldValue && firebase.firestore.FieldValue.serverTimestamp ? firebase.firestore.FieldValue.serverTimestamp() : new Date();
+                try{
+                    if(application.id){
+                        await firebase.firestore().collection('applications').doc(application.id).set({
+                            lastEmployerMessage: {
+                                text: message,
+                                createdAt: timestamp,
+                                createdBy: currentUser ? currentUser.uid : null
+                            }
+                        }, { merge: true });
+                    }
+
+                    await sendNotification(application.candidateUid, {
+                        type: 'application-update',
+                        title: `Thông báo từ ${issuerName}`,
+                        message,
+                        url: application.projectId ? `projectsdetailed.html?id=${encodeURIComponent(application.projectId)}` : 'profile.html',
+                        meta: {
+                            projectId: application.projectId || null,
+                            employerUid: currentUser ? currentUser.uid : null,
+                            applicationId: application.id || null
+                        }
+                    });
+
+                    alert('Đã gửi thông báo tới ứng viên.');
+                }catch(error){
+                    console.error('sendApplicationMessage failed', error);
+                    alert('Không thể gửi thông báo. Vui lòng thử lại sau.');
+                }
+            }
+
+            async function terminateApplication(application){
+                if(!application || !application.id){
+                    alert('Không xác định được hồ sơ ứng viên để sa thải.');
+                    return;
+                }
+                if(!firebase || !firebase.firestore){
+                    alert('Không thể kết nối Firestore để cập nhật trạng thái.');
+                    return;
+                }
+                const confirmTerminate = window.confirm('Bạn có chắc chắn muốn sa thải ứng viên này khỏi dự án?');
+                if(!confirmTerminate) return;
+                const reasonInput = window.prompt('Nhập lý do sa thải (tuỳ chọn):', application.terminationReason || '') || '';
+                try{
+                    const now = firebase.firestore.FieldValue && firebase.firestore.FieldValue.serverTimestamp ? firebase.firestore.FieldValue.serverTimestamp() : new Date();
+                    await firebase.firestore().collection('applications').doc(application.id).update({
+                        status: 'terminated',
+                        terminationReason: reasonInput ? reasonInput : null,
+                        terminatedAt: now,
+                        decidedAt: now,
+                        decisionBy: currentUser ? currentUser.uid : null,
+                        updatedAt: now
+                    });
+
+                    const project = state.projects.find(item => item.id === application.projectId) || {};
+                    const projectTitle = application.projectTitle || project.title || 'dự án của bạn';
+                    const candidateName = application.candidateName || application.candidateEmail || 'Ứng viên';
+                    const issuerName = currentUser ? (currentUser.displayName || currentUser.email || 'Doanh nghiệp') : 'Doanh nghiệp';
+                    const badgeRemoval = await autoRemoveBadgesForProject(application);
+                    const removedBadges = badgeRemoval && Array.isArray(badgeRemoval.removed) ? badgeRemoval.removed : [];
+
+                    const notifyTasks = [];
+                    if(application.candidateUid){
+                        const removalNote = removedBadges.length ? ' Các huy hiệu liên quan tới dự án cũng đã bị thu hồi.' : '';
+                        const terminationMsg = reasonInput ? `${issuerName} đã sa thải bạn khỏi dự án ${projectTitle}. Lý do: ${reasonInput}.${removalNote}` : `${issuerName} đã sa thải bạn khỏi dự án ${projectTitle}.${removalNote}`;
+                        notifyTasks.push(sendNotification(application.candidateUid, {
+                            type: 'application-terminated',
+                            title: 'Bạn đã bị sa thải khỏi dự án',
+                            message: terminationMsg,
+                            url: 'profile.html',
+                            meta: {
+                                projectId: application.projectId || null,
+                                reason: reasonInput || null,
+                                decisionBy: currentUser ? currentUser.uid : null
+                            }
+                        }));
+                        if(removedBadges.length){
+                            const removedNames = removedBadges.map(function(item){
+                                const badge = typeof item === 'string' ? { name: item } : (item || {});
+                                return badge.name || 'Huy hiệu';
+                            }).join(', ');
+                            notifyTasks.push(sendNotification(application.candidateUid, {
+                                type: 'badge-removed',
+                                title: 'Huy hiệu đã bị thu hồi',
+                                message: `${issuerName} đã thu hồi các huy hiệu liên quan đến dự án ${projectTitle}: ${removedNames}.`,
+                                url: 'profile.html',
+                                meta: {
+                                    projectId: application.projectId || null,
+                                    reason: 'terminated'
+                                }
+                            }));
+                        }
+                    }
+
+                    if(currentUser){
+                        notifyTasks.push(sendNotification(currentUser.uid, {
+                            type: 'application-terminated-employer',
+                            title: 'Đã sa thải ứng viên',
+                            message: `Bạn đã sa thải ${candidateName} khỏi dự án ${projectTitle}.`,
+                            url: 'employer.html',
+                            meta: {
+                                projectId: application.projectId || null,
+                                candidateUid: application.candidateUid || null
+                            }
+                        }));
+                    }
+
+                    if(notifyTasks.length){
+                        try{
+                            await Promise.all(notifyTasks);
+                        }catch(notifErr){
+                            console.warn('Gửi thông báo sa thải thất bại', notifErr);
+                        }
+                    }
+                    alert('Đã sa thải ứng viên khỏi dự án.');
+                }catch(err){
+                    console.error('Sa thải ứng viên thất bại', err);
+                    alert('Không thể cập nhật trạng thái sa thải. Vui lòng thử lại sau.');
+                }
+            }
+
+            async function updateApplicationStatus(application, status){
+                if(!application || !application.id){
+                    alert('Không xác định được hồ sơ ứng viên.');
+                    return;
+                }
+                if(!firebase.firestore){
+                    alert('Không thể cập nhật trạng thái khi Firestore không khả dụng.');
+                    return;
+                }
+                const confirmMsg = status === 'accepted' ? 'Xác nhận chấp nhận ứng viên này?' : 'Xác nhận từ chối ứng viên này?';
+                const ok = window.confirm(confirmMsg);
+                if(!ok) return;
+
+                let noteValue = application.note || null;
+                if(status === 'rejected'){
+                    noteValue = window.prompt('Nhập lý do từ chối (tuỳ chọn):', noteValue || '') || '';
+                }
+
+                let acceptanceMessage = application.acceptanceMessage || '';
+                if(status === 'accepted'){
+                    acceptanceMessage = window.prompt('Nhập thông điệp gửi tới ứng viên (tuỳ chọn):', acceptanceMessage || '') || '';
+                }
+
+                try{
+                    const now = firebase.firestore.FieldValue && firebase.firestore.FieldValue.serverTimestamp ? firebase.firestore.FieldValue.serverTimestamp() : new Date();
+                    const updatePayload = {
+                        status,
+                        note: noteValue ? noteValue : null,
+                        decidedAt: now,
+                        decisionBy: currentUser ? currentUser.uid : null,
+                        updatedAt: now
+                    };
+                    if(status === 'accepted'){
+                        updatePayload.acceptanceMessage = acceptanceMessage ? acceptanceMessage : null;
+                        updatePayload.acceptanceMessageAt = now;
+                    } else {
+                        updatePayload.acceptanceMessage = null;
+                        updatePayload.acceptanceMessageAt = null;
+                    }
+
+                    await firebase.firestore().collection('applications').doc(application.id).update(updatePayload);
+
+                    const project = state.projects.find(item => item.id === application.projectId) || {};
+                    const projectTitle = application.projectTitle || project.title || 'dự án của bạn';
+                    const candidateName = application.candidateName || application.candidateEmail || 'Ứng viên';
+                    const notifyTasks = [];
+
+                    if(application.candidateUid){
+                        let candidateMessage;
+                        if(status === 'accepted'){
+                            candidateMessage = `Bạn đã được chấp nhận tham gia dự án ${projectTitle}. Hãy kiểm tra email để được liên hệ tiếp.`;
+                            if(acceptanceMessage){
+                                candidateMessage += ` Thông điệp từ doanh nghiệp: ${acceptanceMessage}`;
+                            }
+                        }
+
+                        const candidatePayload = status === 'accepted'
+                            ? {
+                                type: 'application-accepted',
+                                title: 'Hồ sơ của bạn đã được chấp nhận',
+                                message: candidateMessage || `Bạn đã được chấp nhận tham gia dự án ${projectTitle}.`,
+                                url: application.projectId ? `projectsdetailed.html?id=${encodeURIComponent(application.projectId)}` : 'profile.html',
+                                meta: {
+                                    projectId: application.projectId || null,
+                                    decisionBy: currentUser ? currentUser.uid : null,
+                                    acceptanceMessage: acceptanceMessage || null
+                                }
+                            }
+                            : {
+                                type: 'application-rejected',
+                                title: 'Hồ sơ của bạn đã bị từ chối',
+                                message: `Rất tiếc, hồ sơ ứng tuyển của bạn cho dự án ${projectTitle} đã bị từ chối${noteValue ? `: ${noteValue}` : ''}.`,
+                                url: 'profile.html',
+                                meta: {
+                                    projectId: application.projectId || null,
+                                    decisionBy: currentUser ? currentUser.uid : null,
+                                    note: noteValue || null
+                                }
+                            };
+                        notifyTasks.push(sendNotification(application.candidateUid, candidatePayload));
+                    }
+
+                    if(currentUser){
+                        notifyTasks.push(sendNotification(currentUser.uid, {
+                            type: 'application-decision',
+                            title: status === 'accepted' ? 'Đã chấp nhận ứng viên' : 'Đã từ chối ứng viên',
+                            message: `${status === 'accepted' ? 'Bạn đã chấp nhận' : 'Bạn đã từ chối'} ${candidateName} cho dự án ${projectTitle}.` + (status === 'accepted' && acceptanceMessage ? ` Thông điệp đã gửi: ${acceptanceMessage}` : ''),
+                            url: 'employer.html'
+                        }));
+                    }
+
+                    if(notifyTasks.length){
+                        try{
+                            await Promise.all(notifyTasks);
+                        }catch(notifErr){
+                            console.warn('Gửi thông báo quyết định thất bại', notifErr);
+                        }
+                    }
+                }catch(err){
+                    console.error('Cập nhật trạng thái ứng viên thất bại', err);
+                    alert('Không thể cập nhật trạng thái. Vui lòng thử lại.');
+                }
+            }
+
+            function loadApplications(projectId){
+                if(!projectId){
+                    cleanupApplications();
+                    applicationsCard.classList.add('hidden');
+                    return;
+                }
+                if(!firebase.firestore){
+                    applicationsCard.classList.remove('hidden');
+                    applicationsHint.textContent = 'Không thể tải danh sách ứng viên khi ngoại tuyến.';
+                    applicationsList.innerHTML = '<div class="employer-empty">Firestore không khả dụng.</div>';
+                    return;
+                }
+
+                setApplicationsLoading('Đang tải ứng viên...');
+                cleanupApplications();
+                state.applicationsUnsub = firebase.firestore().collection('applications')
+                    .where('projectId', '==', projectId)
+                    .onSnapshot(function(snapshot){
+                        const apps = [];
+                        snapshot.forEach(doc => {
+                            const data = doc.data() || {};
+                            const submittedAt = data.submittedAt;
+                            let sortKey = 0;
+                            try{
+                                if(submittedAt && submittedAt.toMillis){
+                                    sortKey = submittedAt.toMillis();
+                                }else if(submittedAt && submittedAt.seconds){
+                                    sortKey = submittedAt.seconds * 1000;
+                                }else if(submittedAt){
+                                    const parsed = Date.parse(submittedAt);
+                                    sortKey = Number.isNaN(parsed) ? 0 : parsed;
+                                }
+                            }catch(e){ sortKey = 0; }
+                            apps.push(Object.assign({ id: doc.id, _sortKey: sortKey }, data));
+                        });
+                        apps.sort((a,b) => (b._sortKey || 0) - (a._sortKey || 0));
+                        apps.forEach(item => { delete item._sortKey; });
+                        renderApplications(apps);
+                    }, function(err){
+                        console.warn('Tải danh sách ứng viên thất bại', err);
+                        applicationsHint.textContent = 'Không thể tải danh sách ứng viên.';
+                        applicationsList.innerHTML = '<div class="employer-empty">Không thể kết nối tới Firestore.</div>';
+                    });
+            }
+
+            function showDashboard(){
+                gateSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+            }
+
+            function showGate(){
+                dashboardSection.classList.add('hidden');
+                gateSection.classList.remove('hidden');
+            }
+
+            async function loadProjects(user){
+                setLoading('Đang tải dự án...');
+                try{
+                    if(firebase.firestore){
+                        const snapshot = await firebase.firestore().collection('projects').where('ownerEmail','==', user.email).get();
+                        const items = [];
+                        snapshot.forEach(doc => {
+                            const data = doc.data() || {};
+                            items.push(Object.assign({ id: doc.id }, data));
+                        });
+                        items.sort((a,b) => {
+                            const da = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+                            const db = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+                            return db - da;
+                        });
+                        renderProjects(items);
+                        if(state.selectedProjectId){
+                            loadApplications(state.selectedProjectId);
+                        }
+                        setFallbackProjects(items);
+                        projectHint.textContent = 'Các dự án được đồng bộ trực tiếp với Firestore.';
+                        return;
+                    }
+                }catch(err){
+                    console.warn('Không tải được dự án từ Firestore', err);
+                    formStatus.textContent = 'Không thể kết nối Firestore, sẽ sử dụng dữ liệu lưu tạm.';
+                }
+                const fallback = getFallbackProjects();
+                if(fallback.length){
+                    const filtered = fallback.filter(item => !user || item.ownerEmail === user.email);
+                    if(filtered.length){
+                        renderProjects(filtered);
+                        if(state.selectedProjectId && applicationsCard){
+                            applicationsCard.classList.add('hidden');
+                        }
+                        return;
+                    }
+                }
+                renderProjects([]);
+                projectHint.textContent = 'Không thể kết nối Firestore, đang hiển thị dữ liệu tạm (trình duyệt).';
+            }
+
+            async function createProject(payload, user){
+                if(firebase.firestore){
+                    const db = firebase.firestore();
+                    const now = firebase.firestore.FieldValue.serverTimestamp ? firebase.firestore.FieldValue.serverTimestamp() : new Date();
+                    const doc = Object.assign({}, payload, {
+                        ownerEmail: user.email,
+                        ownerUid: user.uid,
+                        createdAt: now,
+                        updatedAt: now
+                    });
+                    await db.collection('projects').add(doc);
+                    return true;
+                }
+                const items = getFallbackProjects();
+                items.push(Object.assign({ id: 'local-' + Date.now(), createdAt: new Date().toISOString(), ownerEmail: user.email, ownerUid: user.uid }, payload));
+                setFallbackProjects(items);
+                return true;
+            }
+
+            function normalizeSkills(raw){
+                return raw.split(',').map(s => s.trim()).filter(Boolean);
+            }
+
+            function formatDeadline(value){
+                if(!value) return '';
+                try{
+                    const d = new Date(value);
+                    return d.toISOString().split('T')[0];
+                }catch(e){
+                    return value;
+                }
+            }
+
+            async function handleDeleteProject(project){
+                if(!project || !currentUser) return;
+                if(!project.id){
+                    alert('Không xác định được dự án để xóa.');
+                    return;
+                }
+                const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa dự án "${project.title || 'Không có tiêu đề'}"?`);
+                if(!confirmDelete) return;
+                formStatus.textContent = 'Đang xóa dự án...';
+                try{
+                    let firestoreDeleted = false;
+                    if(firebase.firestore && !project.id.startsWith('local-')){
+                        await firebase.firestore().collection('projects').doc(project.id).delete();
+                        firestoreDeleted = true;
+                    }
+                    removeProjectFromFallback(project.id);
+                    formStatus.textContent = 'Đã xóa dự án.';
+                    if(!firestoreDeleted){
+                        console.warn('Xóa dự án bằng fallback (offline).');
+                    }
+                }catch(err){
+                    console.error('Xóa dự án thất bại', err);
+                    formStatus.textContent = err && err.message ? err.message : 'Không thể xóa dự án.';
+                }
+                if(state.selectedProjectId === project.id){
+                    state.selectedProjectId = null;
+                    cleanupApplications();
+                    if(applicationsCard) applicationsCard.classList.add('hidden');
+                }
+                await loadProjects(currentUser);
+            }
+
+            document.addEventListener('DOMContentLoaded', function(){
+                if(!window._firebaseConfig){
+                    formStatus.textContent = 'Firebase chưa được cấu hình.';
+                    return;
+                }
+
+                firebase.auth().onAuthStateChanged(async function(user){
+                    const role = localStorage.getItem('role');
+                    if(!user || role !== 'employer'){
+                        currentUser = null;
+                        cleanupApplications();
+                        if(applicationsCard) applicationsCard.classList.add('hidden');
+                        showGate();
+                        return;
+                    }
+
+                    showDashboard();
+                    currentUser = user;
+                    await loadProjects(user);
+
+                    form.addEventListener('submit', async function(evt){
+                        evt.preventDefault();
+                        formStatus.textContent = '';
+                        const title = document.getElementById('projectTitle').value.trim();
+                        const shortDesc = document.getElementById('projectShort').value.trim();
+                        const description = document.getElementById('projectDescription').value.trim();
+                        const budget = document.getElementById('projectBudget').value.trim();
+                        const deadline = document.getElementById('projectDeadline').value;
+                        const skills = normalizeSkills(document.getElementById('projectSkills').value || '');
+                        const owner = document.getElementById('projectOwner').value.trim() || user.email;
+                        const location = document.getElementById('projectLocation').value.trim();
+                        const duration = document.getElementById('projectDuration').value.trim();
+                        const featured = document.getElementById('projectFeatured').checked;
+
+                        if(!title || !shortDesc || !budget || !deadline){
+                            formStatus.textContent = 'Vui lòng điền đầy đủ thông tin bắt buộc.';
+                            return;
+                        }
+
+                        const payload = {
+                            title,
+                            shortDesc,
+                            description,
+                            budget,
+                            deadline: formatDeadline(deadline),
+                            skills,
+                            owner,
+                            location,
+                            duration,
+                            featured,
+                            source: 'employer-portal'
+                        };
+
+                        try{
+                            formStatus.textContent = 'Đang lưu dự án...';
+                            await createProject(payload, user);
+                            form.reset();
+                            document.getElementById('projectFeatured').checked = false;
+                            formStatus.textContent = 'Đăng dự án thành công!';
+                            await loadProjects(user);
+                        }catch(err){
+                            console.error('createProject error', err);
+                            formStatus.textContent = err && err.message ? err.message : 'Không thể đăng dự án. Vui lòng thử lại.';
+                        }
+                    });
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Khám phá Dự án</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+	<header class="site-header">
+		<div class="container header-inner">
+			<div class="nav-left">
+				<a class="site-brand" href="/index.html">Projecthub</a>
+				<a href="/projects.html">Khám phá</a>
+				<a href="/employer.html">Doanh nghiệp</a>
+			</div>
+
+			<div class="nav-right">
+				<a href="/login.html">Login</a>
+				<a class="btn-signup" href="/signup.html">Sign Up</a>
+			</div>
+		</div>
+	</header>
+
+	<section class="hero">
+		<div class="hero-inner">
+			<h1>Khám phá Dự án</h1>
+			<p>Tìm các dự án phù hợp với kỹ năng hoặc sở thích của bạn.</p>
+			<div class="search-bar">
+				<input id="q" placeholder="Tìm theo từ khóa, kỹ năng, hoặc tên dự án..." />
+				<button id="doSearch">Tìm</button>
+			</div>
+		</div>
+	</section>
+
+	<main class="container projects-page">
+		<h2>Tất cả dự án</h2>
+		<div id="allProjects" class="projects-grid projects-grid--wide"></div>
+		<h2>Dự án nổi bật</h2>
+		<div id="featured" class="projects-grid projects-grid--compact"></div>
+	</main>
+		<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+		<script src="/firebase.js"></script>
+		<script src="/auth.js"></script>
+		<script src="/header-auth.js"></script>
+		<script>
+		(function(){
+			const SAMPLE_PROJECTS = [
+				{title:'Website giới thiệu cộng đồng — React', shortDesc:'Thiết kế và xây dựng website giới thiệu bằng React.', skills:['JavaScript','React','HTML/CSS'], owner:'Công ty ABC', budget:'3.000.000 VND', deadline:'2025-12-01', featured:true},
+				{title:'Ứng dụng quản lý tác vụ — JavaScript', shortDesc:'Xây dựng SPA quản lý task với tính năng CRUD.', skills:['JavaScript','HTML/CSS'], owner:'Khởi nghiệp XYZ', budget:'4.500.000 VND', deadline:'2026-01-15', featured:false},
+				{title:'Landing page sản phẩm', shortDesc:'Thiết kế landing page thu hút người dùng.', skills:['HTML/CSS','UX'], owner:'Startup QRS', budget:'2.000.000 VND', deadline:'2025-11-20', featured:true},
+				{title:'API Backend cho ứng dụng', shortDesc:'Xây dựng REST API với Node.js', skills:['Node.js','Express'], owner:'Dev Team', budget:'6.000.000 VND', deadline:'2026-02-01', featured:false}
+			];
+
+			const state = {
+				projects: []
+			};
+
+			const localStoreKey = 'employer_projects_fallback';
+
+			function renderProjectCard(p){
+				const el = document.createElement('div'); el.className='project-card';
+				el.innerHTML = `<h3><a href="projectsdetailed.html?id=${encodeURIComponent(p.id||p.title)}">${p.title || 'Dự án'}</a></h3>
+					<p class="meta">${p.owner || ''} · Ngân sách: ${p.budget || '—'} · Thời hạn: ${p.deadline || '—'}</p>
+					<p>${p.shortDesc || ''}</p>
+					<div class="tags">${(p.skills||[]).map(s=>`<span class="tag">${s}</span>`).join('')}</div>`;
+				return el;
+			}
+
+			function renderProjectLists(projects){
+				const all = document.getElementById('allProjects');
+				all.innerHTML = '';
+				projects.forEach(p=> all.appendChild(renderProjectCard(p)));
+
+				const featuredEl = document.getElementById('featured');
+				featuredEl.innerHTML='';
+				const featuredCandidates = projects.filter(p=> p.featured);
+				const featured = featuredCandidates.length ? featuredCandidates : projects.slice(0,3);
+				featured.forEach(p=> featuredEl.appendChild(renderProjectCard(p)));
+			}
+
+			function normalizeProjects(projects){
+				return projects.map(p=>{
+					const clone = Object.assign({}, p);
+					if(clone.deadline && clone.deadline.toDate){
+						clone.deadline = clone.deadline.toDate().toLocaleDateString('vi-VN');
+					}
+					if(clone.createdAt && clone.createdAt.toMillis){
+						clone._createdAt = clone.createdAt.toMillis();
+					}else if(clone.createdAt){
+						const ts = (clone.createdAt.seconds ? clone.createdAt.seconds * 1000 : Date.parse(clone.createdAt)) || Date.now();
+						clone._createdAt = ts;
+					}
+					return clone;
+				});
+			}
+
+			function sortProjects(projects){
+				return projects.slice().sort((a,b)=>{
+					const da = a._createdAt || 0;
+					const db = b._createdAt || 0;
+					return db - da;
+				});
+			}
+
+			function getLocalFallback(){
+				try{
+					const raw = localStorage.getItem(localStoreKey);
+					if(!raw) return [];
+					const parsed = JSON.parse(raw);
+					return Array.isArray(parsed) ? parsed : [];
+				}catch(e){ console.warn('parse local employer projects failed', e); return []; }
+			}
+
+			function createProjectKey(project, idx, source){
+				if(!project) return `${source||'item'}-${idx}`;
+				const base = [project.id, project.slug, project.title, project.owner]
+					.filter(Boolean)
+					.join('|')
+					.trim()
+					.toLowerCase();
+				if(base) return base;
+				return `${source||'item'}-${idx}`;
+			}
+
+			function combineWithFallback(primary){
+				const combined = [];
+				const seen = new Set();
+				const pushUnique = (item, source, idx)=>{
+					const key = createProjectKey(item, idx, source);
+					if(seen.has(key)) return;
+					seen.add(key);
+					combined.push(Object.assign({}, item));
+				};
+
+				(primary||[]).forEach((item, idx)=> pushUnique(item, 'remote', idx));
+				const fallbackList = (getLocalFallback()||[]).concat(SAMPLE_PROJECTS);
+				fallbackList.forEach((item, idx)=> pushUnique(item, 'fallback', idx));
+
+				return combined;
+			}
+
+			function applyProjects(projects){
+				const merged = combineWithFallback(projects);
+				state.projects = sortProjects(normalizeProjects(merged));
+				renderProjectLists(state.projects);
+			}
+
+			function useFallbackProjects(){
+				applyProjects([]);
+			}
+
+			function handleSearch(){
+				const q = document.getElementById('q').value.trim().toLowerCase();
+				const list = !q ? state.projects : state.projects.filter(p=>{
+					return (p.title||'').toLowerCase().includes(q)
+						|| (p.shortDesc||'').toLowerCase().includes(q)
+						|| (p.skills||[]).join(' ').toLowerCase().includes(q)
+						|| (p.owner||'').toLowerCase().includes(q);
+				});
+				renderProjectLists(list);
+			}
+
+			document.getElementById('doSearch').addEventListener('click', handleSearch);
+			document.getElementById('q').addEventListener('keydown', function(ev){ if(ev.key === 'Enter'){ ev.preventDefault(); handleSearch(); }});
+
+			if(window.firebase && firebase.firestore){
+				try{
+					firebase.firestore().collection('projects').onSnapshot(function(snapshot){
+						const projects = [];
+						snapshot.forEach(doc=>{
+							const data = doc.data() || {};
+							projects.push(Object.assign({ id: doc.id }, data));
+						});
+						applyProjects(projects);
+					}, function(error){
+						console.warn('Firestore realtime projects failed', error);
+						useFallbackProjects();
+					});
+					return;
+				}catch(err){
+					console.warn('Firestore projects listener setup failed', err);
+				}
+			}
+
+			useFallbackProjects();
+		})();
+		</script>
+</body>
+</html>

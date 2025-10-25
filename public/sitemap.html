@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sitemap — Project Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css" />
+  <style> body{font-family:Arial,Helvetica,sans-serif;padding:20px} table{border-collapse:collapse;width:100%} th,td{border:1px solid #ddd;padding:8px} th{background:#f4f4f4;text-align:left} </style>
+</head>
+<body>
+  <h1>Sitemap & Danh sách Trang</h1>
+  <p>Danh sách các trang chính và mô tả theo yêu cầu.</p>
+
+  <div style="max-width:1100px;margin-bottom:18px">
+    <a class="site-brand" href="/index.html">Projecthub</a>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>STT</th>
+        <th>Tên Mục / Trang</th>
+        <th>URL (Ví dụ)</th>
+        <th>Nội dung & Mục đích chính</th>
+        <th>Loại Người Dùng</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Trang Chủ (Homepage)</td><td>/</td><td>Thanh tìm kiếm lớn, danh sách các dự án nổi bật/mới nhất.</td><td>All</td></tr>
+      <tr><td>2</td><td>Khám phá Dự án (Discover)</td><td>/projects</td><td>Danh sách dự án đầy đủ, kèm bộ lọc cơ bản (từ khóa, kỹ năng).</td><td>All</td></tr>
+      <tr><td>3</td><td>Đăng ký (Sign Up)</td><td>/signup</td><td>Form tạo tài khoản, bắt buộc chọn vai trò (Ứng viên hoặc Người đăng dự án).</td><td>All</td></tr>
+      <tr><td>4</td><td>Đăng nhập (Login)</td><td>/login</td><td>Form đăng nhập.</td><td>All</td></tr>
+      <tr><td>5</td><td>Trang Chi tiết Dự án</td><td>/projects/[id]</td><td>Hiển thị mô tả, yêu cầu, ngân sách. Chứa Nút Nộp hồ sơ (chỉ cho Ứng viên).</td><td>All</td></tr>
+      <tr><td>6</td><td>Hồ sơ Cá nhân (Profile)</td><td>/dashboard/profile</td><td>Xem và cập nhật thông tin, kinh nghiệm, và Danh sách Kỹ năng (Skills).</td><td>Ứng viên</td></tr>
+      <tr><td>7</td><td>Quản lý Ứng tuyển</td><td>/dashboard/applications</td><td>Danh sách các dự án đã nộp hồ sơ, kèm trạng thái hiện tại.</td><td>Ứng viên</td></tr>
+      <tr><td>8</td><td>Dự án được Đề xuất (AI)</td><td>/dashboard/recommended</td><td>Hiển thị dự án gợi ý dựa trên Kỹ năng trong Hồ sơ cá nhân.</td><td>Ứng viên</td></tr>
+      <tr><td>9</td><td>Dashboard/Tổng quan</td><td>/dashboard</td><td>Thống kê nhanh và điều hướng đến các chức năng quản lý chính.</td><td>Người đăng dự án</td></tr>
+      <tr><td>10</td><td>Đăng tải Dự án Mới</td><td>/dashboard/new-project</td><td>Form tạo dự án mới (Tiêu đề, Mô tả, Kỹ năng, Ngân sách).</td><td>Người đăng dự án</td></tr>
+      <tr><td>11</td><td>Quản lý Dự án</td><td>/dashboard/my-projects</td><td>Danh sách dự án đã đăng, kèm nút Sửa/Xóa và liên kết đến Xem Ứng viên.</td><td>Người đăng dự án</td></tr>
+      <tr><td>12</td><td>Xem Ứng viên</td><td>/dashboard/project/[id]/applicants</td><td>Danh sách hồ sơ ứng tuyển cho một dự án cụ thể. Có chức năng Phân loại (Chọn/Từ chối).</td><td>Người đăng dự án</td></tr>
+    </tbody>
+  </table>
+
+  <p>Trang placeholder cho dashboard:</p>
+    <ul>
+  <li><a href="/dashboard.html">/dashboard</a> — Tổng quan</li>
+  <li><a href="/dashboard-new-project.html">/dashboard/new-project</a> — Đăng dự án mới</li>
+  <li><a href="/dashboard-my-projects.html">/dashboard/my-projects</a> — Quản lý dự án</li>
+  <li><a href="/dashboard-applicants.html">/dashboard/project/[id]/applicants</a> — Xem ứng viên</li>
+  <li><a href="/dashboard-applications.html">/dashboard/applications</a> — Quản lý ứng tuyển (ứng viên)</a></li>
+  <li><a href="/dashboard-recommended.html">/dashboard-recommended</a> — Dự án được đề xuất</li>
+  </ul>
+
+</body>
+</html>

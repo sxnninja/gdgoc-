@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Đăng nhập</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+	<header class="site-header">
+		<div class="container header-inner">
+							<div class="nav-left">
+								<a class="site-brand" href="/index.html">Projecthub</a>
+								<a href="/projects.html">Khám phá</a>
+				<a href="/employer.html">Doanh nghiệp</a>
+							</div>
+
+							<div class="nav-right">
+								<a href="/login.html">Login</a>
+								<a class="btn-signup" href="/signup.html">Sign Up</a>
+							</div>
+		</div>
+	</header>
+
+	<section class="auth-hero">
+		<h1>Login</h1>
+		<p>Sign in to continue managing your projects and applications.</p>
+	</section>
+
+	<main>
+		<div class="auth-card">
+			<div class="auth-tabs" role="tablist">
+				<button id="tabTalent" class="active" role="tab" aria-selected="true">Talent</button>
+				<button id="tabEmployer" role="tab" aria-selected="false">Employer</button>
+			</div>
+
+			<form id="loginForm">
+				<div class="form-row">
+					<label for="liEmail">Email</label>
+					<input class="input" type="email" id="liEmail" required placeholder="Email" />
+				</div>
+
+				<div class="form-row">
+					<label for="liPassword">Password</label>
+					<input class="input" type="password" id="liPassword" required placeholder="Password" />
+				</div>
+
+				<div class="remember-row">
+					<label class="remember"><input type="checkbox" id="remember"/> <span>Remember Me</span></label>
+					<a class="forgot-link" href="#">Forgot Password?</a>
+				</div>
+
+				<p id="liMsg" class="error-msg"></p>
+				<div class="form-row">
+					<button type="submit" class="btn-primary">Login</button>
+				</div>
+
+				<div class="divider">or continue with</div>
+
+				<button type="button" id="googleLogin" class="social-outline social-outline--google">
+					<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> <span>Continue with Google</span>
+				</button>
+
+				<button type="button" id="facebookLogin" class="social-outline social-outline--facebook">
+					<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/facebook.svg" alt="Facebook"> <span>Continue with Facebook</span>
+				</button>
+
+				<p class="signup-footer">Don't have an account? <a href="/signup.html">Sign Up</a></p>
+			</form>
+		</div>
+	</main>
+
+	<!-- Firebase SDKs (CDN) -->
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+	<script src="/firebase.js"></script>
+	<script src="/auth.js"></script>
+	<script src="/header-auth.js"></script>
+	<script>
+		// Debug: log firebase init state to console for diagnosis
+		try{
+			console.log('DEBUG: window._firebaseConfig', window._firebaseConfig);
+			if(window.firebase && firebase.apps) console.log('DEBUG: firebase.apps.length =', firebase.apps.length);
+		}catch(e){ console.warn('DEBUG: firebase debug failed', e); }
+	</script>
+	<script>
+		(function(){
+			const tabTalent = document.getElementById('tabTalent');
+			const tabEmployer = document.getElementById('tabEmployer');
+			const liMsg = document.getElementById('liMsg');
+			let currentRole = 'candidate';
+
+			function setActive(tab){
+				if(tab === 'talent'){
+					tabTalent.classList.add('active'); tabTalent.setAttribute('aria-selected','true');
+					tabEmployer.classList.remove('active'); tabEmployer.setAttribute('aria-selected','false');
+					currentRole = 'candidate';
+				}else{
+					tabEmployer.classList.add('active'); tabEmployer.setAttribute('aria-selected','true');
+					tabTalent.classList.remove('active'); tabTalent.setAttribute('aria-selected','false');
+					currentRole = 'employer';
+				}
+			}
+
+			tabTalent.addEventListener('click', ()=> setActive('talent'));
+			tabEmployer.addEventListener('click', ()=> setActive('employer'));
+
+			async function persistRole(role, user){
+				const resolvedUser = user || (window.firebase && firebase.auth ? firebase.auth().currentUser : null);
+				localStorage.setItem('role', role);
+				if(!resolvedUser) return;
+				try{
+					if(window.firebase && firebase.firestore){
+						const payload = {
+							role,
+							email: resolvedUser.email || '',
+							updatedAt: firebase.firestore.FieldValue && firebase.firestore.FieldValue.serverTimestamp ? firebase.firestore.FieldValue.serverTimestamp() : new Date()
+						};
+						await firebase.firestore().collection('users').doc(resolvedUser.uid).set(payload, { merge: true });
+					}
+				}catch(err){ console.warn('persistRole firestore failed', err); }
+				// cập nhật cache hồ sơ nếu có
+				try{
+					const raw = localStorage.getItem('profile');
+					if(raw){
+						const profile = JSON.parse(raw);
+						profile.role = role;
+						localStorage.setItem('profile', JSON.stringify(profile));
+					}
+				}catch(e){ console.warn('persistRole local profile update failed', e); }
+			}
+
+			document.getElementById('loginForm').addEventListener('submit', async function(e){
+				e.preventDefault(); liMsg.textContent = '';
+				const email = document.getElementById('liEmail').value.trim();
+				const password = document.getElementById('liPassword').value;
+				try{
+					const result = await authApi.login(email,password);
+					await persistRole(currentRole, result && result.user);
+					window.location.href = '/profile.html?login=1';
+				}catch(err){ liMsg.textContent = err && err.message ? err.message : 'Lỗi đăng nhập'; }
+			});
+
+			document.getElementById('googleLogin').addEventListener('click', async function(){
+				try{ const result = await authApi.loginWithGoogle(); await persistRole(currentRole, result && result.user); window.location.href = '/profile.html?login=1'; }
+				catch(err){ liMsg.textContent = err && err.message ? err.message : 'Lỗi Google'; }
+			});
+
+			document.getElementById('facebookLogin').addEventListener('click', async function(){
+				try{ const result = await authApi.loginWithFacebook(); await persistRole(currentRole, result && result.user); window.location.href = '/profile.html?login=1'; }
+				catch(err){ liMsg.textContent = err && err.message ? err.message : 'Lỗi Facebook'; }
+			});
+
+			setActive('talent');
+		})();
+	</script>
+</body>
+</html>
+

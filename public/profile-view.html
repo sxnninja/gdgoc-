@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hồ sơ Ứng viên</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+        .profile-view-page {
+            max-width: 680px;
+            margin: 48px auto;
+        }
+        .profile-view-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 20px 45px -25px rgba(15, 23, 42, 0.35);
+        }
+        .profile-view-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .profile-view-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 700;
+        }
+        .profile-view-title {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+        .profile-view-subtitle {
+            margin: 4px 0 0;
+            color: #64748b;
+        }
+        .profile-view-section {
+            margin-top: 24px;
+        }
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tag-list .tag {
+            background: rgba(79, 70, 229, 0.08);
+            color: #4338ca;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .badge-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #0f172a;
+            color: #fff;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+        .badge-item:hover {
+            filter: brightness(1.05);
+        }
+        .badge-item span {
+            font-size: 0.9rem;
+        }
+        .profile-view-note {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: #eff4ff;
+            color: #1e3a8a;
+        }
+        .profile-view-footer {
+            margin-top: 28px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <main class="profile-view-page">
+        <div id="status" class="profile-view-note" style="display:none;"></div>
+        <article class="profile-view-card" id="profileCard" hidden>
+            <div class="profile-view-header">
+                <div class="profile-view-avatar" id="avatar">U</div>
+                <div>
+                    <h1 class="profile-view-title" id="displayName">Ứng viên</h1>
+                    <p class="profile-view-subtitle" id="badgeCount"></p>
+                </div>
+            </div>
+            <section class="profile-view-section">
+                <h3>Giới thiệu</h3>
+                <p id="bio" class="small-note">Chưa có mô tả.</p>
+            </section>
+            <section class="profile-view-section">
+                <h3>Kỹ năng</h3>
+                <div id="skills" class="tag-list"></div>
+            </section>
+            <section class="profile-view-section">
+                <h3>Huy hiệu từ Doanh nghiệp</h3>
+                <div id="badges" class="badge-list"></div>
+            </section>
+            <p id="badgeInfo" class="profile-view-note">Thông tin này chỉ bao gồm tên hiển thị, giới thiệu, kỹ năng và các huy hiệu do doanh nghiệp cấp.</p>
+        </article>
+        <p class="profile-view-footer">Projecthub – kết nối doanh nghiệp và ứng viên.</p>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="/firebase.js"></script>
+    <script>
+    (function(){
+        const statusEl = document.getElementById('status');
+        const cardEl = document.getElementById('profileCard');
+        const avatarEl = document.getElementById('avatar');
+        const nameEl = document.getElementById('displayName');
+        const bioEl = document.getElementById('bio');
+        const skillsEl = document.getElementById('skills');
+        const badgesEl = document.getElementById('badges');
+        const badgeCountEl = document.getElementById('badgeCount');
+        const badgeInfoEl = document.getElementById('badgeInfo');
+
+        function showStatus(message, isError){
+            if(!statusEl) return;
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+            statusEl.style.background = isError ? '#fee2e2' : '#eff4ff';
+            statusEl.style.color = isError ? '#b91c1c' : '#1e3a8a';
+        }
+
+        function formatBadgeDate(value){
+            if(!value) return '';
+            try{
+                if(value.toDate) return value.toDate().toLocaleDateString('vi-VN');
+                if(value.seconds) return new Date(value.seconds * 1000).toLocaleDateString('vi-VN');
+                const date = new Date(value);
+                if(!Number.isNaN(date.getTime())){
+                    return date.toLocaleDateString('vi-VN');
+                }
+            }catch(e){ /* ignore */ }
+            return '';
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const uid = params.get('uid');
+        if(!uid){
+            showStatus('Thiếu mã ứng viên. Vui lòng quay lại danh sách ứng viên.', true);
+            return;
+        }
+
+        if(!window._firebaseConfig || typeof firebase === 'undefined'){
+            showStatus('Firebase chưa được cấu hình. Không thể tải hồ sơ.', true);
+            return;
+        }
+
+        function ensureFirebase(){
+            if(firebase.apps && firebase.apps.length) return true;
+            try{
+                firebase.initializeApp(window._firebaseConfig);
+                return true;
+            }catch(e){
+                console.warn('Firebase init error', e);
+                return false;
+            }
+        }
+
+        if(!ensureFirebase() || !firebase.firestore){
+            showStatus('Không thể kết nối tới Firestore.', true);
+            return;
+        }
+
+        showStatus('Đang tải hồ sơ...', false);
+
+        firebase.firestore().collection('users').doc(uid).get()
+            .then(function(doc){
+                if(!doc.exists){
+                    showStatus('Không tìm thấy hồ sơ của ứng viên này.', true);
+                    return;
+                }
+                const data = doc.data() || {};
+                const displayName = data.displayName || 'Ứng viên';
+                const bio = data.bio || 'Chưa có mô tả.';
+                const skills = Array.isArray(data.skills) ? data.skills : [];
+                const badges = Array.isArray(data.badges) ? data.badges : [];
+
+                nameEl.textContent = displayName;
+                bioEl.textContent = bio;
+                avatarEl.textContent = displayName.charAt(0).toUpperCase();
+
+                skillsEl.innerHTML = '';
+                if(skills.length){
+                    skills.forEach(function(skill){
+                        const tag = document.createElement('span');
+                        tag.className = 'tag';
+                        tag.textContent = skill;
+                        skillsEl.appendChild(tag);
+                    });
+                }else{
+                    skillsEl.innerHTML = '<span class="small-note">Chưa cập nhật.</span>';
+                }
+
+                badgesEl.innerHTML = '';
+                if(badges.length){
+                    if(badgeInfoEl){
+                        badgeInfoEl.textContent = 'Chọn huy hiệu để xem thông tin chi tiết.';
+                    }
+                    badges.forEach(function(badge){
+                        const data = typeof badge === 'string' ? { name: badge } : (badge || {});
+                        const badgeName = data.name || badge || 'Huy hiệu';
+                        const badgeEl = document.createElement('button');
+                        badgeEl.type = 'button';
+                        badgeEl.className = 'badge-item';
+                        badgeEl.innerHTML = '<span>🏅</span>' + badgeName;
+                        const issuer = data.issuedByName || data.issuedByEmail || '';
+                        const projectName = data.projectTitle || '';
+                        const reason = data.reason || '';
+                        const issuedAtHuman = formatBadgeDate(data.issuedAt);
+                        const infoTitleParts = [];
+                        if(issuer) infoTitleParts.push(issuer);
+                        if(projectName) infoTitleParts.push(projectName);
+                        badgeEl.title = infoTitleParts.join(' · ') || badgeName;
+                        badgeEl.addEventListener('click', function(){
+                            if(!badgeInfoEl) return;
+                            const parts = [];
+                            if(issuer){
+                                parts.push(`${issuer} đã cấp huy hiệu "${badgeName}"`);
+                            }else{
+                                parts.push(`Huy hiệu "${badgeName}"`);
+                            }
+                            if(projectName){
+                                parts.push(`cho dự án ${projectName}`);
+                            }
+                            if(reason){
+                                parts.push(`Lý do: ${reason}`);
+                            }
+                            if(issuedAtHuman){
+                                parts.push(`Cấp ngày ${issuedAtHuman}`);
+                            }
+                            badgeInfoEl.textContent = parts.join('. ') + '.';
+                        });
+                        badgesEl.appendChild(badgeEl);
+                    });
+                    badgeCountEl.textContent = badges.length + ' huy hiệu được doanh nghiệp cấp';
+                }else{
+                    badgesEl.innerHTML = '<span class="small-note">Chưa có huy hiệu nào.</span>';
+                    badgeCountEl.textContent = 'Chưa có huy hiệu được cấp';
+                    if(badgeInfoEl){
+                        badgeInfoEl.textContent = 'Thông tin này chỉ bao gồm tên hiển thị, giới thiệu, kỹ năng và các huy hiệu do doanh nghiệp cấp.';
+                    }
+                }
+
+                cardEl.hidden = false;
+                statusEl.style.display = 'none';
+            })
+            .catch(function(err){
+                console.error('Tải hồ sơ thất bại', err);
+                showStatus('Không thể tải hồ sơ ứng viên. Vui lòng thử lại sau.', true);
+            });
+    })();
+    </script>
+</body>
+</html>

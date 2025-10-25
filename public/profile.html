@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Hồ sơ Cá nhân</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+	<header class="site-header">
+		<div class="container header-inner">
+							<div class="nav-left">
+								<a class="site-brand" href="/index.html">Projecthub</a>
+								<a href="/projects.html">Khám phá</a>
+							<a href="/employer.html">Doanh nghiệp</a>
+							</div>
+
+					<div class="nav-right">
+						<a href="/login.html">Login</a>
+						<a class="btn-signup" href="/signup.html">Sign Up</a>
+					</div>
+		</div>
+	</header>
+
+	<main class="container">
+		<div id="loginNote"></div>
+		<section class="profile-page">
+			<div class="profile-card">
+				<div class="profile-header">
+					<div id="avatar" class="profile-avatar">U</div>
+					<div class="profile-meta">
+						<h2 id="dispName">Người dùng</h2>
+						<div class="profile-subtext" id="userEmail">email@example.com</div>
+						<div class="profile-role-tag" id="userRole">Vai trò: —</div>
+					</div>
+				</div>
+				<hr>
+				<h3>Hồ sơ tóm tắt</h3>
+				<p id="userBio" class="small-note">Chưa có thông tin.</p>
+				<div style="margin-top:12px">
+					<h4>Kỹ năng</h4>
+					<div id="skills" class="skills-list"></div>
+				</div>
+				<div style="margin-top:12px">
+					<h4>Huy hiệu</h4>
+					<div id="badgeList" class="profile-badge-list"></div>
+				</div>
+			</div>
+			<div>
+				<div class="profile-form">
+					<h3>Cập nhật hồ sơ</h3>
+					<form id="profileForm">
+						<label for="displayName">Tên hiển thị</label>
+						<input id="displayName" type="text" />
+						<label for="bio">Giới thiệu</label>
+						<textarea id="bio" rows="4"></textarea>
+						<label for="skillsInput">Kỹ năng (phân tách bằng dấu phẩy)</label>
+						<input id="skillsInput" type="text" placeholder="JavaScript, HTML, CSS" />
+						<button class="btn-save" type="submit">Lưu thay đổi</button>
+					</form>
+				</div>
+				<div id="applicationsSection" style="margin-top:18px">
+					<h3>Ứng tuyển</h3>
+					<div id="applications" class="applications-list">
+						<div>
+							<h4 class="applications-heading">Dự án đang tham gia</h4>
+							<div id="acceptedApps" class="applications-sublist"></div>
+						</div>
+						<div style="margin-top:16px">
+							<h4 class="applications-heading">Bị sa thải khỏi dự án</h4>
+							<div id="terminatedApps" class="applications-sublist"></div>
+						</div>
+						<div style="margin-top:16px">
+							<h4 class="applications-heading">Hồ sơ đã nộp</h4>
+							<div id="submittedApps" class="applications-sublist"></div>
+						</div>
+						<div style="margin-top:16px">
+							<h4 class="applications-heading">Hồ sơ bị từ chối</h4>
+							<div id="rejectedApps" class="applications-sublist"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<script>
+		// show login success note if redirected
+		(function(){
+			const params = new URLSearchParams(window.location.search);
+			if(params.get('login') === '1'){
+				const note = document.createElement('p');
+				note.textContent = 'Đăng nhập thành công!';
+				note.className = 'auth-note';
+				document.getElementById('loginNote').appendChild(note);
+			}
+		})();
+
+		// Profile load/save logic: prefer Firestore if available, fallback to localStorage
+		let applicationsUnsub = null;
+		let profileUnsub = null;
+
+		function detachProfileRealtime(){
+			if(profileUnsub){
+				try{ profileUnsub(); }catch(e){ console.warn('detach profile realtime failed', e); }
+				profileUnsub = null;
+			}
+		}
+
+		function applyProfile(profile, options){
+			const user = options && options.user ? options.user : (firebase && firebase.auth ? firebase.auth().currentUser : null);
+			if(!profile){
+				profile = { displayName: user ? user.email.split('@')[0] : 'Người dùng', email: user ? user.email : '', role: localStorage.getItem('role') || 'candidate', bio: '', skills: [], badges: [] };
+			}
+			const role = profile.role || localStorage.getItem('role') || 'candidate';
+			const email = profile.email || (user ? user.email : '');
+			const displayName = profile.displayName || 'Người dùng';
+			try{ if(role) localStorage.setItem('role', role); }catch(e){ console.warn('sync role to localStorage failed', e); }
+			try{
+				localStorage.setItem('profile', JSON.stringify(Object.assign({}, profile, { email })));
+			}catch(e){ /* ignore */ }
+			document.getElementById('dispName').textContent = displayName;
+			document.getElementById('userEmail').textContent = email || '';
+			document.getElementById('userRole').textContent = 'Vai trò: ' + (role || '—');
+			document.getElementById('userRole').dataset.role = role || '';
+			document.getElementById('userBio').textContent = profile.bio || 'Chưa có thông tin.';
+			document.getElementById('displayName').value = profile.displayName || '';
+			document.getElementById('bio').value = profile.bio || '';
+			document.getElementById('skillsInput').value = (profile.skills||[]).join(', ');
+			document.getElementById('avatar').textContent = displayName.charAt(0).toUpperCase();
+			const skillsEl = document.getElementById('skills');
+			if(skillsEl){
+				skillsEl.innerHTML = '';
+				(profile.skills||[]).forEach(s=>{const el=document.createElement('span');el.className='skill-tag';el.textContent=s;skillsEl.appendChild(el)});
+			}
+			renderBadgeList(Array.isArray(profile.badges) ? profile.badges : []);
+			toggleApplicationsSection(role);
+			return profile;
+		}
+
+		async function loadProfile(){
+			const user = firebase && firebase.auth ? firebase.auth().currentUser : null;
+			let profile = null;
+			if((window._db || (window.firebase && firebase.firestore)) && user){
+				try{
+					const db = window._db || firebase.firestore();
+					const doc = await db.collection('users').doc(user.uid).get();
+					if(doc.exists) profile = doc.data();
+				}catch(e){console.warn('Failed to read profile from Firestore', e)}
+			}
+			if(!profile){
+				// fallback to localStorage
+				const raw = localStorage.getItem('profile');
+				if(raw) profile = JSON.parse(raw);
+			}
+			return applyProfile(profile, { user });
+		}
+
+		function subscribeProfileRealtime(user){
+			detachProfileRealtime();
+			if(!(window.firebase && firebase.firestore) || !user) return;
+			try{
+				profileUnsub = firebase.firestore().collection('users').doc(user.uid)
+					.onSnapshot(function(snapshot){
+						const data = snapshot.exists ? snapshot.data() : null;
+						applyProfile(data, { user });
+					}, function(err){ console.warn('profile realtime listener error', err); });
+			}catch(e){ console.warn('profile realtime listener failed', e); }
+		}
+
+			function renderBadgeList(badges){
+				const container = document.getElementById('badgeList');
+				if(!container) return;
+				container.innerHTML = '';
+				if(!Array.isArray(badges) || !badges.length){
+					container.innerHTML = '<p class="small-note">Chưa có huy hiệu nào.</p>';
+					return;
+				}
+				badges.forEach(function(badge){
+					const data = typeof badge === 'string' ? { name: badge } : (badge || {});
+					const wrapper = document.createElement('div');
+					wrapper.className = 'profile-badge-chip';
+					const title = document.createElement('div');
+					title.className = 'profile-badge-chip__title';
+					title.textContent = data.name || String(badge);
+					const meta = document.createElement('div');
+					meta.className = 'profile-badge-chip__meta';
+					const issuer = data.issuedByName || data.issuedByEmail;
+					const project = data.projectTitle || '';
+					const reason = data.reason || '';
+					const issuedAt = data.issuedAt ? formatBadgeDate(data.issuedAt) : '';
+					const bits = [];
+					if(issuer) bits.push('Cấp bởi ' + issuer);
+					if(project) bits.push('Dự án ' + project);
+					if(reason) bits.push('Lý do: ' + reason);
+					if(issuedAt) bits.push('Ngày cấp ' + issuedAt);
+					meta.textContent = bits.join(' • ');
+					wrapper.appendChild(title);
+					if(bits.length) wrapper.appendChild(meta);
+					container.appendChild(wrapper);
+				});
+			}
+
+		async function saveProfile(e){
+			e && e.preventDefault();
+			console.log('[profile] saveProfile start');
+			const displayName = document.getElementById('displayName').value.trim();
+			const role = localStorage.getItem('role') || document.getElementById('userRole').dataset.role || 'candidate';
+			const bio = document.getElementById('bio').value.trim();
+			const skills = document.getElementById('skillsInput').value.split(',').map(s=>s.trim()).filter(Boolean);
+			const user = firebase && firebase.auth ? firebase.auth().currentUser : null;
+			const profile = { displayName, role, bio, skills, email: user ? user.email : '' };
+			// try write to Firestore if available and user present
+			let saved=false;
+			console.log('[profile] user before save', user);
+			if((window._db || (window.firebase && firebase.firestore)) && user){
+				try{
+					const db = window._db || firebase.firestore();
+					await db.collection('users').doc(user.uid).set(profile, {merge:true});
+					saved=true;
+					console.log('[profile] saved to Firestore via', db === window._db ? 'window._db' : 'firebase.firestore()');
+				}catch(e){console.warn('Failed to save profile to Firestore', e)}
+			}
+			// fallback to localStorage
+			try{ localStorage.setItem('profile', JSON.stringify(profile)); localStorage.setItem('role', role); saved=true;}catch(e){console.warn('Failed to save profile to localStorage', e)}
+			console.log('[profile] saved flag =', saved);
+			// update UI
+			document.getElementById('dispName').textContent = displayName || 'Người dùng';
+			document.getElementById('userRole').textContent = 'Vai trò: ' + role;
+			document.getElementById('userBio').textContent = bio || 'Chưa có thông tin.';
+			document.getElementById('avatar').textContent = (displayName||'U').charAt(0).toUpperCase();
+			// refresh skills
+			const skillsEl = document.getElementById('skills'); skillsEl.innerHTML = '';
+			(skills||[]).forEach(s=>{const el=document.createElement('span');el.className='skill-tag';el.textContent=s;skillsEl.appendChild(el)});
+
+			// If user is signed in, update Firebase Auth displayName so header-auth can reflect it
+			if(user && firebase && firebase.auth && firebase.auth().currentUser){
+				try{
+					await firebase.auth().currentUser.updateProfile({ displayName: displayName || null });
+					console.log('[profile] firebase.updateProfile OK', displayName);
+				}catch(e){
+					console.warn('Failed to update firebase auth profile', e);
+				}
+				// update header display immediately if present
+				const navUser = document.querySelector('.nav-user');
+				if(navUser){ navUser.textContent = displayName || user.email || 'User'; }
+				// notify header to refresh (for cases where header-auth will re-render later)
+				try{ window._lastDisplayName = displayName || null; }catch(e){}
+				try{ if(window.refreshHeader) window.refreshHeader(); }catch(e){}
+				try{ document.dispatchEvent(new CustomEvent('profile-updated', { detail: { displayName: displayName || null } })); }catch(e){}
+			}
+			// reload profile UI from storage/Firestore to ensure left card updates
+			try{ await loadProfile(); console.log('[profile] loadProfile refreshed after save'); }catch(e){console.warn('[profile] loadProfile failed after save', e)}
+
+			if(saved) alert('Hồ sơ đã được lưu.'); else alert('Lưu hồ sơ thất bại.');
+		}
+
+		// init: wait for firebase auth state then load
+		document.addEventListener('DOMContentLoaded', function(){
+			if(window.firebase && firebase.auth){
+				firebase.auth().onAuthStateChanged(function(u){
+					if(!u){
+						// not logged in -> redirect to login and request return
+						const next = encodeURIComponent('profile.html');
+						detachApplications();
+						detachProfileRealtime();
+						window.location.href = 'login.html?next=' + next;
+						return;
+					}
+					// logged in: load profile và chỉ tải danh sách ứng tuyển cho ứng viên
+					subscribeProfileRealtime(u);
+					loadProfile().then(function(profile){
+						const role = (profile && profile.role) || localStorage.getItem('role') || '';
+						if((role || '').toLowerCase() === 'candidate'){
+							loadApplications(u.uid);
+						}else{
+							detachApplications();
+						}
+					}).catch(function(err){
+						console.warn('loadProfile error', err);
+						const role = localStorage.getItem('role') || '';
+						if((role || '').toLowerCase() === 'candidate'){
+							loadApplications(u.uid);
+						}
+					});
+				});
+			} else {
+				// no firebase, still load from localStorage
+				loadProfile();
+			}
+			// attach save
+			document.getElementById('profileForm').addEventListener('submit', saveProfile);
+		});
+
+		function detachApplications(){
+			if(applicationsUnsub){
+				try{ applicationsUnsub(); }catch(e){ console.warn('detach applications failed', e); }
+				applicationsUnsub = null;
+			}
+		}
+
+		function toggleApplicationsSection(role){
+			const section = document.getElementById('applicationsSection');
+			if(!section) return;
+			if((role || '').toLowerCase() === 'candidate'){
+				section.classList.remove('hidden');
+			}else{
+				section.classList.add('hidden');
+				detachApplications();
+			}
+		}
+
+		function toDateSafe(value){
+			if(!value) return null;
+			try{
+				if(value.toDate) return value.toDate();
+				if(value.seconds) return new Date(value.seconds * 1000);
+				if(typeof value === 'number') return new Date(value);
+				const parsed = Date.parse(value);
+				if(!Number.isNaN(parsed)) return new Date(parsed);
+			}catch(e){ /* ignore */ }
+			return null;
+		}
+
+		function formatDateTime(value){
+			const date = toDateSafe(value);
+			if(!date) return '—';
+			try{ return date.toLocaleString('vi-VN'); }catch(e){ return date.toISOString(); }
+		}
+
+		function formatBadgeDate(value){
+			const date = toDateSafe(value);
+			if(!date) return '';
+			try{ return date.toLocaleDateString('vi-VN'); }catch(e){ return date.toISOString(); }
+		}
+
+		function statusLabel(status){
+			switch(status){
+				case 'accepted': return 'Đang tham gia';
+				case 'rejected': return 'Đã từ chối';
+				case 'terminated': return 'Đã bị sa thải';
+				default: return 'Đang chờ duyệt';
+			}
+		}
+
+		function buildApplicationCard(app, options){
+			const card = document.createElement('div');
+			card.className = 'application-card';
+			const status = (app.status || 'pending').toLowerCase();
+			const title = app.projectUrl ? `<a href="${app.projectUrl}">${app.projectTitle || 'Dự án'}</a>` : (app.projectTitle || 'Dự án');
+			const metaItems = [];
+			metaItems.push('Nộp: ' + formatDateTime(app.submittedAt));
+			if(app.projectOwnerEmail) metaItems.push('Doanh nghiệp: ' + app.projectOwnerEmail);
+			if(status === 'accepted' && app.decidedAt) metaItems.push('Chấp nhận: ' + formatDateTime(app.decidedAt));
+			if(status === 'rejected' && app.decidedAt) metaItems.push('Từ chối: ' + formatDateTime(app.decidedAt));
+			if(status === 'terminated' && app.terminatedAt) metaItems.push('Sa thải: ' + formatDateTime(app.terminatedAt));
+			const noteHtml = status === 'rejected' && app.note ? `<p class="application-card__note">Lý do: ${app.note}</p>` : '';
+			const terminationNote = status === 'terminated' && app.terminationReason ? `<p class="application-card__note">Lý do sa thải: ${app.terminationReason}</p>` : '';
+			const statusHtml = (options && options.hideStatus) ? '' : `<span class="status-chip status-chip--${status}">${statusLabel(status)}</span>`;
+			card.innerHTML = `
+				<div class="application-card__top">
+					<div>
+						<p class="application-card__title">${title}</p>
+						<div class="application-card__meta">${metaItems.map(item => `<span>${item}</span>`).join('<span>•</span>')}</div>
+					</div>
+					${statusHtml}
+				</div>
+				${noteHtml || terminationNote}
+			`;
+			return card;
+		}
+
+		function renderApplicationLists(accepted, pending, rejected, terminated){
+			const acceptedContainer = document.getElementById('acceptedApps');
+			const submittedContainer = document.getElementById('submittedApps');
+			const rejectedContainer = document.getElementById('rejectedApps');
+			const terminatedContainer = document.getElementById('terminatedApps');
+			if(!acceptedContainer || !submittedContainer || !rejectedContainer || !terminatedContainer) return;
+
+			acceptedContainer.innerHTML = '';
+			submittedContainer.innerHTML = '';
+			rejectedContainer.innerHTML = '';
+			terminatedContainer.innerHTML = '';
+
+			if(!accepted.length){
+				acceptedContainer.innerHTML = '<p class="small-note">Chưa có dự án nào được chấp nhận.</p>';
+			}else{
+				accepted.forEach(app => {
+					acceptedContainer.appendChild(buildApplicationCard(app, { hideStatus: false }));
+				});
+			}
+
+			if(!terminated.length){
+				terminatedContainer.innerHTML = '<p class="small-note">Bạn chưa bị sa thải khỏi dự án nào.</p>';
+			}else{
+				terminated.forEach(app => {
+					terminatedContainer.appendChild(buildApplicationCard(app, { hideStatus: false }));
+				});
+			}
+
+			if(!pending.length){
+				submittedContainer.innerHTML = '<p class="small-note">Bạn chưa nộp hồ sơ nào hoặc tất cả hồ sơ đã được xử lý.</p>';
+			}else{
+				pending.forEach(app => {
+					submittedContainer.appendChild(buildApplicationCard(app, { hideStatus: false }));
+				});
+			}
+
+			if(!rejected.length){
+				rejectedContainer.innerHTML = '<p class="small-note">Chưa có hồ sơ nào bị từ chối.</p>';
+			}else{
+				rejected.forEach(app => {
+					rejectedContainer.appendChild(buildApplicationCard(app, { hideStatus: false }));
+				});
+			}
+		}
+
+		function normalizeApplication(doc){
+			const data = doc.data() || {};
+			return {
+				id: doc.id,
+				projectId: data.projectId || null,
+				projectTitle: data.projectTitle || 'Dự án',
+				projectOwnerEmail: data.projectOwnerEmail || '',
+				status: (data.status || 'pending').toLowerCase(),
+				submittedAt: data.submittedAt || data.appliedAt || null,
+				decidedAt: data.decidedAt || null,
+				note: data.note || '',
+				terminatedAt: data.terminatedAt || null,
+				terminationReason: data.terminationReason || '',
+				projectUrl: data.projectId ? `projectsdetailed.html?id=${encodeURIComponent(data.projectId)}` : ''
+			};
+		}
+
+		function loadApplications(uid){
+			const acceptedContainer = document.getElementById('acceptedApps');
+			const submittedContainer = document.getElementById('submittedApps');
+			const terminatedContainer = document.getElementById('terminatedApps');
+			if(!acceptedContainer || !submittedContainer || !terminatedContainer) return;
+			const rejectedContainer = document.getElementById('rejectedApps');
+			const roleFromDom = document.getElementById('userRole') && document.getElementById('userRole').dataset.role;
+			const role = (roleFromDom || localStorage.getItem('role') || '').toLowerCase();
+			if(role && role !== 'candidate'){
+				acceptedContainer.innerHTML = '';
+				submittedContainer.innerHTML = '';
+				terminatedContainer.innerHTML = '';
+				if(rejectedContainer) rejectedContainer.innerHTML = '';
+				return;
+			}
+
+			detachApplications();
+			acceptedContainer.innerHTML = '<p class="small-note">Đang tải...</p>';
+			submittedContainer.innerHTML = '<p class="small-note">Đang tải...</p>';
+			terminatedContainer.innerHTML = '<p class="small-note">Đang tải...</p>';
+
+			if(!(window.firebase && firebase.firestore)){
+				acceptedContainer.innerHTML = '<p class="small-note">Firestore không khả dụng.</p>';
+				submittedContainer.innerHTML = '';
+				terminatedContainer.innerHTML = '';
+				if(rejectedContainer) rejectedContainer.innerHTML = '';
+				return;
+			}
+
+			try{
+				const ref = firebase.firestore().collection('applications')
+					.where('candidateUid','==', uid);
+				applicationsUnsub = ref.onSnapshot(function(snapshot){
+					const accepted = [];
+					const pending = [];
+					const rejected = [];
+					const terminated = [];
+					const buffer = [];
+					snapshot.forEach(doc => {
+						const app = normalizeApplication(doc);
+						const submittedDate = toDateSafe(app.submittedAt);
+						buffer.push({ sortKey: submittedDate ? submittedDate.getTime() : 0, app });
+					});
+					buffer.sort((a,b) => (b.sortKey || 0) - (a.sortKey || 0));
+					buffer.forEach(entry => {
+						const app = entry.app;
+						const status = app.status || 'pending';
+						if(status === 'accepted') accepted.push(app);
+						else if(status === 'rejected') rejected.push(app);
+						else if(status === 'terminated') terminated.push(app);
+						else pending.push(app);
+					});
+					renderApplicationLists(accepted, pending, rejected, terminated);
+				}, function(err){
+					console.warn('Failed to subscribe application list', err);
+					acceptedContainer.innerHTML = '<p class="small-note">Không thể tải danh sách ứng tuyển.</p>';
+					submittedContainer.innerHTML = '';
+					const rejectedContainer = document.getElementById('rejectedApps');
+					if(rejectedContainer) rejectedContainer.innerHTML = '';
+					const terminatedEl = document.getElementById('terminatedApps');
+					if(terminatedEl) terminatedEl.innerHTML = '';
+				});
+			}catch(e){
+				console.warn('loadApplications error', e);
+				acceptedContainer.innerHTML = '<p class="small-note">Không thể tải danh sách ứng tuyển.</p>';
+				submittedContainer.innerHTML = '';
+				const rejectedContainer = document.getElementById('rejectedApps');
+				if(rejectedContainer) rejectedContainer.innerHTML = '';
+				const terminatedEl = document.getElementById('terminatedApps');
+				if(terminatedEl) terminatedEl.innerHTML = '';
+			}
+		}
+		</script>
+	</main>
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+		<script src="/firebase.js"></script>
+		<script src="/auth.js"></script>
+		<script src="/header-auth.js"></script>
+
+</body>
+</html>
+

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Đăng Ký</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+	<header class="site-header">
+		<div class="container header-inner">
+			<div class="nav-left">
+				<a class="site-brand" href="/index.html">Projecthub</a>
+				<a href="/projects.html">Khám phá</a>
+				<a href="/employer.html">Doanh nghiệp</a>
+			</div>
+
+			<div class="nav-right">
+				<a href="/login.html">Login</a>
+				<a class="btn-signup" href="/signup.html">Sign Up</a>
+			</div>
+		</div>
+	</header>
+
+		<section class="auth-hero">
+			<h1>Sign Up</h1>
+			<p>Đăng ký để tìm dự án hoặc tuyển dụng tài năng.</p>
+		</section>
+
+		<main>
+			<div class="auth-card">
+				<div class="auth-tabs" role="tablist">
+					<button id="tabTalent" class="active" role="tab" aria-selected="true">Talent</button>
+					<button id="tabEmployer" role="tab" aria-selected="false">Employer</button>
+				</div>
+
+				<form id="signupForm">
+					<div class="form-row">
+						<label for="suEmail">Email</label>
+						<input class="input" type="email" id="suEmail" required placeholder="Email" />
+					</div>
+
+					<div class="form-row">
+						<label for="suPassword">Password</label>
+						<input class="input" type="password" id="suPassword" required placeholder="Password" />
+					</div>
+
+					<div class="form-row" style="display:flex;gap:12px;align-items:center;margin-top:12px">
+						<div style="flex:1">
+							<select id="suRole" class="input">
+								<option value="candidate">Talent</option>
+								<option value="employer">Employer</option>
+							</select>
+						</div>
+					</div>
+
+					<p id="suMsg" style="color:crimson;margin-top:8px"></p>
+					<div class="form-row" style="margin-top:12px">
+						<button type="submit" class="btn-primary">Sign Up</button>
+					</div>
+
+					<div class="divider">or continue with</div>
+
+					<button type="button" id="googleSignUp" class="social-outline social-outline--google">
+						<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"> <span>Sign up with Google</span>
+					</button>
+
+					<p class="signup-footer">Already have an account? <a href="/login.html">Sign In</a></p>
+				</form>
+			</div>
+		</main>
+
+	<!-- Firebase SDKs (CDN) -->
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+	<script src="/firebase.js"></script>
+	<script src="/auth.js"></script>
+	<script src="/header-auth.js"></script>
+		<script>
+			(function(){
+				const tabTalent = document.getElementById('tabTalent');
+				const tabEmployer = document.getElementById('tabEmployer');
+				const roleSelect = document.getElementById('suRole');
+				const msg = document.getElementById('suMsg');
+
+				function setActive(tab){
+					if(tab === 'talent'){
+						tabTalent.classList.add('active'); tabTalent.setAttribute('aria-selected', 'true');
+						tabEmployer.classList.remove('active'); tabEmployer.setAttribute('aria-selected','false');
+						roleSelect.value = 'candidate';
+					} else {
+						tabEmployer.classList.add('active'); tabEmployer.setAttribute('aria-selected','true');
+						tabTalent.classList.remove('active'); tabTalent.setAttribute('aria-selected','false');
+						roleSelect.value = 'employer';
+					}
+				}
+
+				tabTalent.addEventListener('click', ()=> setActive('talent'));
+				tabEmployer.addEventListener('click', ()=> setActive('employer'));
+
+				document.getElementById('signupForm').addEventListener('submit', async function(e){
+					e.preventDefault(); msg.textContent = '';
+					const email = document.getElementById('suEmail').value.trim();
+					const pass = document.getElementById('suPassword').value;
+					const role = document.getElementById('suRole').value;
+					try{
+						await authApi.signup(email, pass, role);
+						window.location.href = '/login.html?registered=1';
+					}catch(err){ msg.textContent = err && err.message ? err.message : 'Lỗi đăng ký'; }
+				});
+
+				document.getElementById('googleSignUp').addEventListener('click', async function(){
+					try{ await authApi.loginWithGoogle(); window.location.href = '/profile.html?login=1'; }
+					catch(err){ msg.textContent = err && err.message ? err.message : 'Lỗi Google'; }
+				});
+
+				// default
+				setActive('talent');
+			})();
+		</script>
+</body>
+</html>

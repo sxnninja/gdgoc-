@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Project Hub — Trang Chủ</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+		<header class="site-header">
+			<div class="container header-inner">
+								<div class="nav-left">
+									<a class="site-brand" href="/index.html">Projecthub</a>
+									<a href="/projects.html">Khám phá</a>
+					<a href="/employer.html">Doanh nghiệp</a>
+								</div>
+
+						<div class="nav-right">
+							<a href="/login.html">Login</a>
+							<a class="btn-signup" href="/signup.html">Sign Up</a>
+						</div>
+			</div>
+		</header>
+
+	<section class="hero">
+		<div class="hero-inner">
+			<h1>Tìm Dự án cho Sinh viên & Ứng viên</h1>
+			<p>Tìm dự án thực tế để học tập, phát triển kỹ năng và nộp hồ sơ.</p>
+
+			<div class="search-bar">
+				<input id="searchInput" placeholder="Tìm theo từ khóa, kỹ năng, hoặc tên dự án..." />
+				<button id="searchBtn">Tìm kiếm</button>
+			</div>
+		</div>
+	</section>
+
+	<section class="featured">
+		<div class="featured-head">
+			<h2>Dự án nổi bật</h2>
+			<p>Những cơ hội nổi bật được tuyển chọn dành cho sinh viên & ứng viên.</p>
+		</div>
+		<div class="featured-list">
+			<article class="project-card featured-card">
+				<h3><a href="projectsdetailed.html">Website giới thiệu cộng đồng — React</a></h3>
+				<p class="meta">Công ty ABC · Ngân sách: 3.000.000 VND · Thời hạn: 1 tháng</p>
+				<p>Mô tả: Thiết kế và xây dựng website giới thiệu bằng React. Thích hợp cho sinh viên muốn thực hành frontend.</p>
+				<div class="tags"><span class="tag">React</span><span class="tag">UI/UX</span><span class="tag">Frontend</span></div>
+			</article>
+			<article class="project-card featured-card">
+				<h3><a href="projectsdetailed.html">Ứng dụng quản lý tác vụ — JavaScript</a></h3>
+				<p class="meta">Khởi nghiệp XYZ · Ngân sách: 4.500.000 VND · Thời hạn: 2 tháng</p>
+				<p>Mô tả: Xây dựng SPA quản lý task với tính năng CRUD. Yêu cầu: JavaScript, HTML/CSS.</p>
+				<div class="tags"><span class="tag">JavaScript</span><span class="tag">SPA</span><span class="tag">Productivity</span></div>
+			</article>
+		</div>
+	</section>
+
+	<script>
+		document.getElementById('searchBtn').addEventListener('click', function(){
+			const q = document.getElementById('searchInput').value.trim();
+			// Chuyển tới trang khám phá với query param (placeholder)
+				if(q) window.location.href = 'projects.html?q=' + encodeURIComponent(q);
+				else window.location.href = 'projects.html';
+		});
+	</script>
+		<!-- Load Firebase & header-auth to update nav based on auth state -->
+		<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+		<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+	<script src="/firebase.js"></script>
+	<script src="/auth.js"></script>
+	<script src="/header-auth.js"></script>
+		<script>
+			// Debug: log firebase init state to console for diagnosis
+			try{ console.log('DEBUG: window._firebaseConfig', window._firebaseConfig); if(window.firebase && firebase.apps) console.log('DEBUG: firebase.apps.length =', firebase.apps.length);}catch(e){console.warn('DEBUG: firebase debug failed', e)}
+		</script>
+</body>
+</html>
