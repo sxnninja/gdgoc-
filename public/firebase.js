@@ -1,7 +1,7 @@
 // Firebase initialization (modular SDK)
 // Đảm bảo cấu hình được gắn lên window để các script khác sử dụng.
 const firebaseConfig = {
-  apiKey: "AIzaSyAdAGwPzYaOIIwfZXsKtYy45X5IRqLlrf8",
+  apiKey: "AIzaSyCUJ0u9Gfp_c1j2LnaUXd-A2cqlijfk7VI",
   authDomain: "gdgoc-projecthub.firebaseapp.com",
   projectId: "gdgoc-projecthub",
   storageBucket: "gdgoc-projecthub.firebasestorage.app",
